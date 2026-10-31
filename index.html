@@ -1,0 +1,226 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+<title>Vishal &amp; Purvaja | Wedding Invitation 💍</title>
+<!-- WhatsApp link preview -->
+<meta property="og:title" content="Vishal & Purvaja are getting married! 💍">
+<meta property="og:description" content="Catch 10 hearts to unlock the invitation 💖">
+<meta name="theme-color" content="#7a1230">
+<style>
+  :root { --maroon:#7a1230; --gold:#f5c26b; --cream:#fff6e5; }
+  * { box-sizing:border-box; -webkit-tap-highlight-color:transparent; }
+  html,body { margin:0; height:100%; overflow:hidden; background:var(--maroon);
+    font-family:Georgia,'Times New Roman',serif; color:var(--cream); touch-action:none; }
+  #game { position:fixed; inset:0; width:100%; height:100%; display:block;
+    background:radial-gradient(circle at 50% 0%, #a3194a 0%, #7a1230 55%, #3d0a19 100%); }
+  .overlay { position:fixed; inset:0; display:flex; flex-direction:column; align-items:center;
+    justify-content:center; text-align:center; padding:24px; gap:14px; }
+  .hidden { display:none !important; }
+  h1 { margin:0; font-size:clamp(28px,7vw,44px); color:var(--gold); }
+  p { margin:0; font-size:clamp(16px,4vw,20px); line-height:1.5; max-width:420px; }
+  button, .btn { background:var(--gold); color:#4a0f1f; border:none; border-radius:999px;
+    padding:14px 30px; font-size:18px; font-weight:bold; font-family:inherit; cursor:pointer;
+    text-decoration:none; display:inline-block; }
+  .btn.small { padding:10px 18px; font-size:15px; }
+  .btn.ghost { background:transparent; color:var(--gold); border:2px solid var(--gold); }
+  .link { background:none; color:var(--cream); text-decoration:underline; font-size:15px;
+    opacity:.85; padding:6px; font-weight:normal; border:none; }
+  #hud { position:fixed; top:0; left:0; right:0; padding:14px 18px; display:flex;
+    justify-content:space-between; align-items:center; font-size:20px; pointer-events:none; }
+  #skip { pointer-events:auto; font-size:14px; }
+  #bar { position:fixed; top:0; left:0; height:5px; background:var(--gold); width:0; transition:width .25s; }
+
+  /* Invitation (PDF pages) */
+  #invite { justify-content:flex-start; background:rgba(40,6,16,.9); overflow-y:auto;
+    -webkit-overflow-scrolling:touch; touch-action:pan-y; padding:0 0 40px; gap:0; }
+  #toolbar { position:sticky; top:0; z-index:5; width:100%; display:flex; gap:10px; justify-content:center;
+    flex-wrap:wrap; padding:10px 12px; background:rgba(61,10,25,.95); border-bottom:1px solid rgba(245,194,107,.35); }
+  .pages { width:100%; max-width:520px; padding:16px 12px 0; display:flex; flex-direction:column; gap:16px; }
+  .pages img { width:100%; height:auto; aspect-ratio:595/842; display:block; border-radius:12px;
+    box-shadow:0 8px 28px rgba(0,0,0,.5); background:#5a0f26; }
+  .after { display:flex; flex-direction:column; gap:10px; align-items:center; margin-top:22px; padding:0 16px; }
+</style>
+</head>
+<body>
+
+<canvas id="game"></canvas>
+<div id="bar"></div>
+
+<div id="hud" class="hidden">
+  <span id="score">💖 0 / 10</span>
+  <button id="skip" class="link">Skip &amp; view invitation</button>
+</div>
+
+<!-- Start screen -->
+<div id="start" class="overlay">
+  <div style="font-size:56px">💍</div>
+  <h1>You're Invited!</h1>
+  <p>Catch the falling hearts in the basket to unlock your invitation.</p>
+  <p style="opacity:.8;font-size:15px">Drag or swipe left &amp; right to move the basket</p>
+  <button id="play">Play 💖</button>
+  <button id="skip2" class="link">Skip &amp; view invitation</button>
+</div>
+
+<!-- Congratulations (after 10 catches) -->
+<div id="congrats" class="overlay hidden" style="pointer-events:none">
+  <div style="font-size:64px">🎉</div>
+  <h1>Congratulations!</h1>
+  <p>You caught all the hearts 💖<br>Your invitation is unlocked.</p>
+  <button id="openInv" style="pointer-events:auto;margin-top:10px">Open Invitation 💌</button>
+</div>
+
+<!-- Invitation: the PDF pages -->
+<div id="invite" class="overlay hidden">
+  <div id="toolbar">
+    <a id="dir" class="btn small" target="_blank" rel="noopener">📍 Get Directions</a>
+    <a class="btn small ghost" href="Wedding_Invite.pdf" download>⬇ Download PDF</a>
+  </div>
+  <div class="pages">
+    <img src="invite/page-1.jpg" alt="Invitation – Om Shree Ganeshay Namah">
+    <img src="invite/page-2.jpg" alt="Vishal and Purvaja – Wed, 2 Dec 2026, 12 PM, Om Priyadashini Lawns, Dhule" loading="lazy">
+    <img src="invite/page-3.jpg" alt="Functions and ceremonies – Sangeet 1 Dec, Haldi 2 Dec, Wedding 2 Dec" loading="lazy">
+    <img src="invite/page-4.jpg" alt="We look forward to celebrating with you" loading="lazy">
+  </div>
+  <div class="after">
+    <a id="dir2" class="btn" target="_blank" rel="noopener">📍 Get Directions</a>
+    <a id="rsvp" class="btn ghost hidden" target="_blank" rel="noopener">💬 Confirm on WhatsApp</a>
+  </div>
+</div>
+
+<script>
+/* ================== EDIT THESE ================== */
+const CONFIG = {
+  mapsLink: "https://maps.google.com/?q=Om+Priyadashini+Lawns+Dhule",  // replace with the exact Google Maps share link of the venue
+  whatsappNumber: "",   // e.g. "919876543210" (country code + number, no + or spaces); "" hides the RSVP button
+  target: 10            // hearts needed to unlock
+};
+/* ================================================ */
+
+const $ = id => document.getElementById(id);
+$('dir').href = CONFIG.mapsLink; $('dir2').href = CONFIG.mapsLink;
+if (CONFIG.whatsappNumber) {
+  $('rsvp').href = "https://wa.me/" + CONFIG.whatsappNumber + "?text=" +
+    encodeURIComponent("Hi! I'll be attending the wedding 🎉");
+  $('rsvp').classList.remove('hidden');
+}
+
+const cv = $('game'), ctx = cv.getContext('2d');
+let W, H, dpr;
+function resize() {
+  dpr = window.devicePixelRatio || 1;
+  W = innerWidth; H = innerHeight;
+  cv.width = W * dpr; cv.height = H * dpr;
+  ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+  basket.y = H - 90;
+}
+const basket = { x: 0, w: 90, y: 0 };
+addEventListener('resize', resize);
+
+const EMOJIS = ['❤️', '💖', '🌸', '🪔', '💗', '🌹'];
+let items = [], sparkles = [], score = 0, running = false, last = 0, spawnT = 0, targetX = null;
+
+function spawn() {
+  const size = 34 + Math.random() * 12;
+  items.push({ x: size + Math.random() * (W - size * 2), y: -40, size,
+    vy: 110 + Math.random() * 60 + score * 6, e: EMOJIS[Math.floor(Math.random() * EMOJIS.length)] });
+}
+
+function start() {
+  $('start').classList.add('hidden'); $('hud').classList.remove('hidden');
+  items = []; sparkles = []; score = 0; spawnT = 0; running = true;
+  basket.x = W / 2; targetX = basket.x; updateScore();
+  last = performance.now(); requestAnimationFrame(loop);
+}
+
+function updateScore() {
+  $('score').textContent = "💖 " + score + " / " + CONFIG.target;
+  $('bar').style.width = (score / CONFIG.target * 100) + "%";
+}
+
+let congratsTimer = null;
+function showCongrats() {
+  running = false;
+  $('hud').classList.add('hidden'); $('start').classList.add('hidden');
+  $('congrats').classList.remove('hidden');
+  burst();
+  congratsTimer = setTimeout(showInvite, 3500);   // opens automatically; button opens it sooner
+}
+
+function showInvite() {
+  clearTimeout(congratsTimer);
+  running = false;
+  $('hud').classList.add('hidden'); $('start').classList.add('hidden');
+  $('congrats').classList.add('hidden');
+  $('bar').style.width = "0"; $('invite').classList.remove('hidden');
+  $('invite').scrollTop = 0;
+}
+
+function burst() {
+  for (let i = 0; i < 60; i++) sparkles.push({ x: W / 2, y: H / 3, vx: (Math.random() - .5) * 500,
+    vy: -Math.random() * 400, life: 1.6, e: EMOJIS[i % EMOJIS.length] });
+  if (!running && !burst.on) { burst.on = true; last = performance.now(); requestAnimationFrame(sparkLoop); }
+}
+function sparkLoop(t) {
+  const dt = Math.min((t - last) / 1000, .05); last = t;
+  ctx.clearRect(0, 0, W, H);
+  sparkles = sparkles.filter(s => (s.life -= dt) > 0);
+  sparkles.forEach(s => { s.vy += 600 * dt; s.x += s.vx * dt; s.y += s.vy * dt;
+    ctx.globalAlpha = Math.min(1, s.life); ctx.font = "26px serif"; ctx.fillText(s.e, s.x, s.y); });
+  ctx.globalAlpha = 1;
+  if (sparkles.length) requestAnimationFrame(sparkLoop); else burst.on = false;
+}
+
+function loop(t) {
+  if (!running) return;
+  const dt = Math.min((t - last) / 1000, .05); last = t;
+  ctx.clearRect(0, 0, W, H);
+
+  basket.x += (targetX - basket.x) * Math.min(1, dt * 14);
+  basket.x = Math.max(basket.w / 2, Math.min(W - basket.w / 2, basket.x));
+
+  spawnT -= dt;
+  if (spawnT <= 0) { spawn(); spawnT = 0.7 + Math.random() * 0.4; }
+
+  for (let i = items.length - 1; i >= 0; i--) {
+    const it = items[i]; it.y += it.vy * dt;
+    if (it.y > basket.y - 10 && it.y < basket.y + 40 && Math.abs(it.x - basket.x) < basket.w / 2 + 6) {
+      items.splice(i, 1); score++; updateScore();
+      if (navigator.vibrate) navigator.vibrate(15);
+      for (let k = 0; k < 6; k++) sparkles.push({ x: it.x, y: it.y, vx: (Math.random() - .5) * 200,
+        vy: -Math.random() * 200, life: .5, e: '✨' });
+      if (score >= CONFIG.target) { showCongrats(); return; }
+      continue;
+    }
+    if (it.y > H + 50) { items.splice(i, 1); continue; }   // missed: no penalty
+    ctx.font = it.size + "px serif"; ctx.textAlign = "center"; ctx.fillText(it.e, it.x, it.y);
+  }
+
+  sparkles = sparkles.filter(s => (s.life -= dt) > 0);
+  sparkles.forEach(s => { s.vy += 500 * dt; s.x += s.vx * dt; s.y += s.vy * dt;
+    ctx.globalAlpha = Math.max(0, s.life * 2); ctx.font = "18px serif"; ctx.fillText(s.e, s.x, s.y); });
+  ctx.globalAlpha = 1;
+
+  ctx.font = "64px serif"; ctx.textAlign = "center"; ctx.fillText("🧺", basket.x, basket.y + 40);
+  requestAnimationFrame(loop);
+}
+
+function pointer(e) { const p = e.touches ? e.touches[0] : e; targetX = p.clientX; }
+cv.addEventListener('touchstart', pointer, { passive: true });
+cv.addEventListener('touchmove', pointer, { passive: true });
+cv.addEventListener('mousemove', pointer);
+addEventListener('keydown', e => {
+  if (!running) return;
+  if (e.key === 'ArrowLeft') targetX -= 60;
+  if (e.key === 'ArrowRight') targetX += 60;
+});
+
+$('openInv').onclick = showInvite;
+$('play').onclick = start;
+$('skip').onclick = showInvite;
+$('skip2').onclick = showInvite;
+resize();
+</script>
+</body>
+</html>
